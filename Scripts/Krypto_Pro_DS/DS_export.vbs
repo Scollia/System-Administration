@@ -1,15 +1,15 @@
-'включаем обработку ошибок
+'РІРєР»СЋС‡Р°РµРј РѕР±СЂР°Р±РѕС‚РєСѓ РѕС€РёР±РѕРє
 On Error Resume Next
 
-' Директория для файлов с контейнерами и сертификатами, относительно текущей
+' Р”РёСЂРµРєС‚РѕСЂРёСЏ РґР»СЏ С„Р°Р№Р»РѕРІ СЃ РєРѕРЅС‚РµР№РЅРµСЂР°РјРё Рё СЃРµСЂС‚РёС„РёРєР°С‚Р°РјРё, РѕС‚РЅРѕСЃРёС‚РµР»СЊРЅРѕ С‚РµРєСѓС‰РµР№
 DataSubDir    = "UserDS"
-' Интерактивный ввод/вывод
+' РРЅС‚РµСЂР°РєС‚РёРІРЅС‹Р№ РІРІРѕРґ/РІС‹РІРѕРґ
 IsInteractive = "true"
 
 '====================================================================
 Function get_SID(strUsername, strInUserDomain)
   On Error Resume Next
-  ' Считываем данные аккаунта рабочего пользователя
+  ' РЎС‡РёС‚С‹РІР°РµРј РґР°РЅРЅС‹Рµ Р°РєРєР°СѓРЅС‚Р° СЂР°Р±РѕС‡РµРіРѕ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ
   Set objWMIService = GetObject("winmgmts:\\.\root\cimv2")
 
   Err.Clear
@@ -17,12 +17,12 @@ Function get_SID(strUsername, strInUserDomain)
 
   If Err.Number <> 0 Then
     if IsInteractive = "true" then
-      MsgBox("Пользователь не найден")
+      MsgBox("РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ РЅРµ РЅР°Р№РґРµРЅ")
     end if
     WScript.Quit 2
   end if
 
-  ' Возвращаем SID рабочего пользователя
+  ' Р’РѕР·РІСЂР°С‰Р°РµРј SID СЂР°Р±РѕС‡РµРіРѕ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ
   get_SID = objAccount.SID
 End Function
 '====================================================================
@@ -41,7 +41,7 @@ end Sub
 Sub Export_DS(strUsrSID, strDataDir)
   On Error Resume Next
 
-  ' Задаем  константы
+  ' Р—Р°РґР°РµРј  РєРѕРЅСЃС‚Р°РЅС‚С‹
   'const HKEY_CURRENT_USER  = &H80000001
   const HKEY_LOCAL_MACHINE = &H80000002
 
@@ -50,21 +50,21 @@ Sub Export_DS(strUsrSID, strDataDir)
   Set objNetwork = CreateObject("Wscript.Network")
   Set objReg     = GetObject("winmgmts:{impersonationLevel=impersonate}!\\" & objNetwork.ComputerName & "\root\default:StdRegProv")
 
-  ' Ключ реестра из которого импортировать контейнеры электронных подписей
+  ' РљР»СЋС‡ СЂРµРµСЃС‚СЂР° РёР· РєРѕС‚РѕСЂРѕРіРѕ РёРјРїРѕСЂС‚РёСЂРѕРІР°С‚СЊ РєРѕРЅС‚РµР№РЅРµСЂС‹ СЌР»РµРєС‚СЂРѕРЅРЅС‹С… РїРѕРґРїРёСЃРµР№
   strRegKeyDS    = "SOFTWARE\Wow6432Node\Crypto Pro\Settings\Users\" + strUsrSID + "\Keys"
 
   intRes = objReg.EnumKey(HKEY_LOCAL_MACHINE, strRegKeyDS, sNames)
   If intRes <> 0 Then
     if IsInteractive = "true" then
-      MsgBox("Контейнеров в реестре с электронными подписями у пользователя не найдено")
+      MsgBox("РљРѕРЅС‚РµР№РЅРµСЂРѕРІ РІ СЂРµРµСЃС‚СЂРµ СЃ СЌР»РµРєС‚СЂРѕРЅРЅС‹РјРё РїРѕРґРїРёСЃСЏРјРё Сѓ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ РЅРµ РЅР°Р№РґРµРЅРѕ")
     end if
     WScript.Quit 3
   end If
-    
+
   If IsArray(sNames) Then
     DSCount = 0
     DSList  = ""
-    ' Для каждого контейнера сохраняем ключ реестра 
+    ' Р”Р»СЏ РєР°Р¶РґРѕРіРѕ РєРѕРЅС‚РµР№РЅРµСЂР° СЃРѕС…СЂР°РЅСЏРµРј РєР»СЋС‡ СЂРµРµСЃС‚СЂР°
     For Each strDSName In sNames
       DSCount = DSCount + 1
       DSList  = DSList & vbCrLf & strDSName
@@ -75,7 +75,7 @@ Sub Export_DS(strUsrSID, strDataDir)
       Set objFile = objFSO.OpenTextFile(strDataDir + "\" + strDSName + "\DS.orig", 1, false , -1)
       strText = objFile.ReadAll
       objFile.Close
-     
+
       strNewText = Replace(strText, strUsrSID, "__SID_HERE__")
 
       Set objFile = objFSO.OpenTextFile(strDataDir + "\" + strDSName + "\DS.orig", 2, true, -1)
@@ -83,7 +83,7 @@ Sub Export_DS(strUsrSID, strDataDir)
       objFile.Close
     next
     if IsInteractive = "true" then
-      MsgBox("Экспортировано " & DSCount & " контейнер(а/ов):" & DSList)
+      MsgBox("Р­РєСЃРїРѕСЂС‚РёСЂРѕРІР°РЅРѕ " & DSCount & " РєРѕРЅС‚РµР№РЅРµСЂ(Р°/РѕРІ):" & DSList)
     end if
   end if
 end Sub
@@ -101,7 +101,7 @@ Sub Export_WinCertKey(strAppData, strDataDir)
   end if
 
   if IsInteractive = "true" then
-    MsgBox("Экспорт сертификатов и ключей завершен")
+    MsgBox("Р­РєСЃРїРѕСЂС‚ СЃРµСЂС‚РёС„РёРєР°С‚РѕРІ Рё РєР»СЋС‡РµР№ Р·Р°РІРµСЂС€РµРЅ")
   end if
 end Sub
 
@@ -110,29 +110,29 @@ Set WshShell    = CreateObject("WScript.Shell")
 Set WshEnvirVol = WshShell.Environment("VOLATILE")
 Set objNetwork  = CreateObject("Wscript.Network")
 
-' Имя пользователя у которого экспортируем ЭЦП
-' Устанавливаем в имя текущего пользователя
+' РРјСЏ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ Сѓ РєРѕС‚РѕСЂРѕРіРѕ СЌРєСЃРїРѕСЂС‚РёСЂСѓРµРј Р­Р¦Рџ
+' РЈСЃС‚Р°РЅР°РІР»РёРІР°РµРј РІ РёРјСЏ С‚РµРєСѓС‰РµРіРѕ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ
 strInUsername   = objNetwork.UserName
-' Имя домена пользователя
-' Устанавлиаем в имя домена текущего пользователя
+' РРјСЏ РґРѕРјРµРЅР° РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ
+' РЈСЃС‚Р°РЅР°РІР»РёР°РµРј РІ РёРјСЏ РґРѕРјРµРЅР° С‚РµРєСѓС‰РµРіРѕ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ
 strInUserDomain = objNetwork.UserDomain
 
 
-' Составляем полное имя пользователя, включая домен, если компьютер в домене
+' РЎРѕСЃС‚Р°РІР»СЏРµРј РїРѕР»РЅРѕРµ РёРјСЏ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ, РІРєР»СЋС‡Р°СЏ РґРѕРјРµРЅ, РµСЃР»Рё РєРѕРјРїСЊСЋС‚РµСЂ РІ РґРѕРјРµРЅРµ
 if strInUserDomain = "" then
   strInFullUserName = strInUsername
 else
   strInFullUserName = strInUserDomain + "\" + strInUsername
 end if
 
-' Выводим запрос на ввод имени пользователя
+' Р’С‹РІРѕРґРёРј Р·Р°РїСЂРѕСЃ РЅР° РІРІРѕРґ РёРјРµРЅРё РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ
 if IsInteractive = "true" then
-  strInFullUserName = InputBox("Введите имя пользователя, у кого экспортируем ЭЦП", "Ввод имени пользователя", strInFullUserName)
+  strInFullUserName = InputBox("Р’РІРµРґРёС‚Рµ РёРјСЏ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ, Сѓ РєРѕРіРѕ СЌРєСЃРїРѕСЂС‚РёСЂСѓРµРј Р­Р¦Рџ", "Р’РІРѕРґ РёРјРµРЅРё РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ", strInFullUserName)
 end if
 
-' Проверяем присудствует в имени пользователя имя домена
+' РџСЂРѕРІРµСЂСЏРµРј РїСЂРёСЃСѓРґСЃС‚РІСѓРµС‚ РІ РёРјРµРЅРё РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ РёРјСЏ РґРѕРјРµРЅР°
 ind_razd = InStr(1, strInFullUserName, "\", vbTextCompare)
-' В зависимости от результата устанавливаем рабочие имя пользователя и домен
+' Р’ Р·Р°РІРёСЃРёРјРѕСЃС‚Рё РѕС‚ СЂРµР·СѓР»СЊС‚Р°С‚Р° СѓСЃС‚Р°РЅР°РІР»РёРІР°РµРј СЂР°Р±РѕС‡РёРµ РёРјСЏ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ Рё РґРѕРјРµРЅ
 if not ind_razd = 0 then
   strUsername     = Right(strInFullUserName, len(strInFullUserName) - ind_razd)
   strInUserDomain = Left(strInFullUserName, ind_razd - 1)
@@ -143,12 +143,12 @@ end if
 
 if strUsername = "" then
   if IsInteractive = "true" then
-    MsgBox("Отсутствует имя пользователя")
+    MsgBox("РћС‚СЃСѓС‚СЃС‚РІСѓРµС‚ РёРјСЏ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ")
   end if
   WScript.Quit 1
 end if
 
-' Путь к профилю пользователя у которого экспортируем ЭЦП
+' РџСѓС‚СЊ Рє РїСЂРѕС„РёР»СЋ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ Сѓ РєРѕС‚РѕСЂРѕРіРѕ СЌРєСЃРїРѕСЂС‚РёСЂСѓРµРј Р­Р¦Рџ
 if strUsername = strInUsername then
   strAppData = WshEnvirVol("AppData")
 else

@@ -1,28 +1,28 @@
-'включаем обработку ошибок
+'РІРєР»СЋС‡Р°РµРј РѕР±СЂР°Р±РѕС‚РєСѓ РѕС€РёР±РѕРє
 On Error Resume Next
 
-' Директория для файлов с SID-ами, относительно текущей
+' Р”РёСЂРµРєС‚РѕСЂРёСЏ РґР»СЏ С„Р°Р№Р»РѕРІ СЃ SID-Р°РјРё, РѕС‚РЅРѕСЃРёС‚РµР»СЊРЅРѕ С‚РµРєСѓС‰РµР№
 DataSubDir    = "UserSID"
-' Интерактивный ввод/вывод
+' РРЅС‚РµСЂР°РєС‚РёРІРЅС‹Р№ РІРІРѕРґ/РІС‹РІРѕРґ
 IsInteractive = "true"
 
 '====================================================================
 Function get_SID(strUsername, strInUserDomain)
   On Error Resume Next
-  ' Считываем данные аккаунта рабочего пользователя
+  ' РЎС‡РёС‚С‹РІР°РµРј РґР°РЅРЅС‹Рµ Р°РєРєР°СѓРЅС‚Р° СЂР°Р±РѕС‡РµРіРѕ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ
   Set objWMIService = GetObject("winmgmts:\\.\root\cimv2")
 
   Err.Clear
   Set objAccount = objWMIService.Get("Win32_UserAccount.Name='" & strUsername & "',Domain='" & strInUserDomain & "'")
 
   If Err.Number <> 0 Then
-    if IsInteractive = "true" then 
-      MsgBox("Пользователь не найден")
+    if IsInteractive = "true" then
+      MsgBox("РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ РЅРµ РЅР°Р№РґРµРЅ")
     end if
     WScript.Quit 2
   end if
 
-  ' Возвращаем SID рабочего пользователя
+  ' Р’РѕР·РІСЂР°С‰Р°РµРј SID СЂР°Р±РѕС‡РµРіРѕ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ
   get_SID = objAccount.SID
 End Function
 '====================================================================
@@ -45,8 +45,8 @@ Sub Save_SID(getSID, strUsername, strDataDir)
 
   call Create_Dir(strDataDir)
 
-  if IsInteractive = "true" then 
-    MsgBox("SID пользователя "  + strUsername + " сохранен в файл:" + vbCrLf + strDataDir + "\" + strUsername + "_SID.txt")
+  if IsInteractive = "true" then
+    MsgBox("SID РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ "  + strUsername + " СЃРѕС…СЂР°РЅРµРЅ РІ С„Р°Р№Р»:" + vbCrLf + strDataDir + "\" + strUsername + "_SID.txt")
   end if
 
   Set objFile = objFSO.OpenTextFile(strDataDir + "\" + strUsername + "_SID.txt", 2, true, -1)
@@ -57,28 +57,28 @@ End Sub
 
 Set objNetwork = CreateObject("Wscript.Network")
 
-' Имя пользователя у которого экспортируем ЭЦП
-' Устанавливаем в имя текущего пользователя
+' РРјСЏ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ Сѓ РєРѕС‚РѕСЂРѕРіРѕ СЌРєСЃРїРѕСЂС‚РёСЂСѓРµРј Р­Р¦Рџ
+' РЈСЃС‚Р°РЅР°РІР»РёРІР°РµРј РІ РёРјСЏ С‚РµРєСѓС‰РµРіРѕ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ
 strInUsername   = objNetwork.UserName
-' Имя домена пользователя
-' Устанавлиаем в имя домена текущего пользователя
+' РРјСЏ РґРѕРјРµРЅР° РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ
+' РЈСЃС‚Р°РЅР°РІР»РёР°РµРј РІ РёРјСЏ РґРѕРјРµРЅР° С‚РµРєСѓС‰РµРіРѕ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ
 strInUserDomain = objNetwork.UserDomain
 
-' Составляем полное имя пользователя, включая домен, если компьютер в домене
+' РЎРѕСЃС‚Р°РІР»СЏРµРј РїРѕР»РЅРѕРµ РёРјСЏ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ, РІРєР»СЋС‡Р°СЏ РґРѕРјРµРЅ, РµСЃР»Рё РєРѕРјРїСЊСЋС‚РµСЂ РІ РґРѕРјРµРЅРµ
 if strInUserDomain = "" then
   strInFullUserName = strInUsername
 else
   strInFullUserName = strInUserDomain + "\" + strInUsername
 end if
 
-' Выводим запрос на ввод имени пользователя
-if IsInteractive = "true" then 
-  strInFullUserName   = InputBox("Введите имя пользователя, чей SID пытаемся определить", "Ввод имени пользователя", strInFullUserName)
-end if 
+' Р’С‹РІРѕРґРёРј Р·Р°РїСЂРѕСЃ РЅР° РІРІРѕРґ РёРјРµРЅРё РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ
+if IsInteractive = "true" then
+  strInFullUserName   = InputBox("Р’РІРµРґРёС‚Рµ РёРјСЏ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ, С‡РµР№ SID РїС‹С‚Р°РµРјСЃСЏ РѕРїСЂРµРґРµР»РёС‚СЊ", "Р’РІРѕРґ РёРјРµРЅРё РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ", strInFullUserName)
+end if
 
-' Проверяем присудствует в имени пользователя имя домена
+' РџСЂРѕРІРµСЂСЏРµРј РїСЂРёСЃСѓРґСЃС‚РІСѓРµС‚ РІ РёРјРµРЅРё РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ РёРјСЏ РґРѕРјРµРЅР°
 ind_razd = InStr(1, strInFullUserName, "\", vbTextCompare)
-' В зависимости от результата устанавливаем рабочие имя пользователя и домен
+' Р’ Р·Р°РІРёСЃРёРјРѕСЃС‚Рё РѕС‚ СЂРµР·СѓР»СЊС‚Р°С‚Р° СѓСЃС‚Р°РЅР°РІР»РёРІР°РµРј СЂР°Р±РѕС‡РёРµ РёРјСЏ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ Рё РґРѕРјРµРЅ
 if not ind_razd = 0 then
   strUsername     = Right(strInFullUserName, len(strInFullUserName) - ind_razd)
   strInUserDomain = Left(strInFullUserName, ind_razd - 1)
@@ -88,15 +88,15 @@ else
 end if
 
 if strUsername = "" then
-  if IsInteractive = "true" then 
-    MsgBox("Отсутствует имя пользователя")
+  if IsInteractive = "true" then
+    MsgBox("РћС‚СЃСѓС‚СЃС‚РІСѓРµС‚ РёРјСЏ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ")
   end if
   WScript.Quit 1
 end if
 
 
 getSID = get_SID(strUsername, strInUserDomain)
-if IsInteractive = "true" then 
+if IsInteractive = "true" then
   MsgBox(getSID)
 end if
 call Save_SID(getSID, strUsername, DataSubDir + "\" + strInUserDomain)
