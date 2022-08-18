@@ -54,6 +54,7 @@ function Update_Data {
       $ListViewItem.SubItems.Add($username)
       $ListViewItem.SubItems.Add($item.Password)
       $ListViewItem.SubItems.Add($item.ExpirationTimestamp.ToString('dd.MM.yyyy HH:mm:ss'))
+write-host ($item.ComputerName + " " + $item.Password)
     } else {
       $ListViewItem.SubItems.Add("")
       $ListViewItem.SubItems.Add("")
