@@ -3,7 +3,7 @@ Add-Type -assembly System.Windows.Forms
 $username = "NewLocalAdmin"
  
 $main_form = New-Object System.Windows.Forms.Form
-$main_form.Text ='Список локальных администраторов'
+$main_form.Text ='Г‘ГЇГЁГ±Г®ГЄ Г«Г®ГЄГ Г«ГјГ­Г»Гµ Г Г¤Г¬ГЁГ­ГЁГ±ГІГ°Г ГІГ®Г°Г®Гў'
 $main_form.Width = 500
 $main_form.Height = 300
 #$main_form.AutoSize = $true
@@ -11,10 +11,10 @@ $main_form.AutoScale = $true
 $main_form.StartPosition = "CenterScreen"
 
 $ListView = New-Object System.Windows.Forms.ListView
-$listView.Columns.Add('Компьютер')
-$listView.Columns.Add('Имя администратора')
-$listView.Columns.Add('Пароль')
-$listView.Columns.Add('Срок действия пароля')
+$listView.Columns.Add('ГЉГ®Г¬ГЇГјГѕГІГҐГ°')
+$listView.Columns.Add('Г€Г¬Гї Г Г¤Г¬ГЁГ­ГЁГ±ГІГ°Г ГІГ®Г°Г ')
+$listView.Columns.Add('ГЏГ Г°Г®Г«Гј')
+$listView.Columns.Add('Г‘Г°Г®ГЄ Г¤ГҐГ©Г±ГІГўГЁГї ГЇГ Г°Г®Г«Гї')
 
 $ListView.Location = New-Object System.Drawing.Point(3,3)
 $ListView.Width = $main_form.ClientSize.Width - 6
@@ -36,7 +36,7 @@ $listView.AutoResizeColumns(1)
 $main_form.Controls.add($ListView)
 
 $Button_Refresh = New-Object System.Windows.Forms.Button
-$Button_Refresh.Text = "Обновить"
+$Button_Refresh.Text = "ГЋГЎГ­Г®ГўГЁГІГј"
 $Button_Refresh.Location = New-Object System.Drawing.Point(($Main_Form.ClientSize.Width - 80), ($Main_Form.ClientSize.Height - 30))
 $Button_Refresh.AutoSize = $false
 $Button_Refresh.Anchor = 'Bottom,Right'
@@ -46,8 +46,8 @@ function Update_Data {
   $ListView.BeginUpdate()
   $ListView.Items.Clear()
 
-  #foreach($item in (Invoke-Command -ComputerName srv-dc-01 -ScriptBlock {Get-ADComputer -Filter {ms-Mcs-AdmPwd -like "*"} -SearchBase “OU=Workstations,OU=DSK_Computers,DC=corp,DC=dskvrn,DC=ru” | Get-AdmPwdPassword -ComputerName {$_.Name}})){
-  foreach($item in (Invoke-Command -ComputerName srv-dc-01 -ScriptBlock {Get-ADComputer -Filter "*" -SearchBase “OU=Workstations,OU=DSK_Computers,DC=corp,DC=dskvrn,DC=ru” | Get-AdmPwdPassword -ComputerName {$_.Name}})) {
+  #foreach($item in (Invoke-Command -ComputerName srv-dc-01 -ScriptBlock {Get-ADComputer -Filter {ms-Mcs-AdmPwd -like "*"} -SearchBase вЂњOU=Workstations,OU=DSK_Computers,DC=corp,DC=dskvrn,DC=ruвЂќ | Get-AdmPwdPassword -ComputerName {$_.Name}})){
+  foreach($item in (Invoke-Command -ComputerName srv-dc-01 -ScriptBlock {Get-ADComputer -Filter "*" -SearchBase вЂњOU=Workstations,OU=DSK_Computers,DC=corp,DC=dskvrn,DC=ruвЂќ | Get-AdmPwdPassword -ComputerName {$_.Name}})) {
     $ListViewItem = New-Object System.Windows.Forms.ListViewItem($item.ComputerName)
 #    if (Invoke-Command -ComputerName $item.ComputerName -ScriptBlock {Get-LocalUser | Where-Object {$_.Name -eq "wsituser"}}) {
     if ($item.Password) {
