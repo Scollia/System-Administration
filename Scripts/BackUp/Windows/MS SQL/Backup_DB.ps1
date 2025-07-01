@@ -1,4 +1,10 @@
-﻿#If (-NOT ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator"))
+﻿# ===================================
+# Версия 2.1
+# От 01.07.2025
+# Добавлена процедура копирвание на FTP по структуре конфигурационных каталогов
+# ===================================
+
+#If (-NOT ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator"))
 #{   
 #    $arguments = "& '" + $myinvocation.mycommand.definition + "'"
 #    Start-Process powershell -Verb runAs -ArgumentList $arguments
@@ -26,8 +32,14 @@ function Send-Telegram {
 
   [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
+  if ($vtg_chat_id.IndexOf("_") -gt 0) {
+    $vtg_message_thread_id = "&message_thread_id="+$vtg_chat_id.Substring($vtg_chat_id.IndexOf("_") + 1)
+  } else {
+    $vtg_message_thread_id = ""
+  }
+
 #  write-host "https://api.telegram.org/bot$($vtg_token)/sendMessage?chat_id=$($vtg_chat_id)&text=$($vMessage)&parse_mode=html"
-  $Response = Invoke-RestMethod -Uri "https://api.telegram.org/bot$($vtg_token)/sendMessage?chat_id=$($vtg_chat_id)&text=$($vMessage)&parse_mode=html" 
+  $Response = Invoke-RestMethod -Uri "https://api.telegram.org/bot$($vtg_token)/sendMessage?chat_id=$($vtg_chat_id)$($vtg_message_thread_id)&text=$($vMessage)&parse_mode=html" 
   return $Response    
 }
 
@@ -35,7 +47,7 @@ function Send-Telegram {
 # Задание рабочих переменных
 #============================================
 # Место хранения логов
-$tmp_log_dir = "E:\Backups_SQL.log"
+$tmp_log_dir    = "E:\Backups_SQL.log"
 $tmp_backup_dir = "E:\Backups_SQL"
 $net_backup_dir = "Microsoft.Powershell.Core\FileSystem::\\SRV-NAS-242.CORP.TRBYTE.RU\1c_Archive" 
 
@@ -46,6 +58,7 @@ $srv_name = $env:computername
 $include_db_file = "E:\Backups_SQL.conf\include_DB.conf"
 $exclude_db_file = "E:\Backups_SQL.conf\exclude_DB.conf"
 $list_db_file    = "E:\Backups_SQL.conf\list_DB"
+$ftp_conf_dir    = "E:\Backups_SQL.conf\ftp.conf"
 
 # Количество дней хранения временных копий
 $doktc = 1
@@ -55,13 +68,13 @@ $dokdc = 14
 $dokmc = 365
 
 # Текущая дата 
-$today = get-date
+$today   = get-date
 $lastDay = [DateTime]::DaysInMonth($today.Year, $today.Month)
 $datelog = $today.ToString("yyyyMMdd")
 
 # Задание параметров для Telegram бота
-$tg_token="5442649570:AAHO7-cxy5U6kCvaGIOZjNo8UwcozA4UA5E"
-$tg_chat_id="-899082778"
+$tg_token   = "5442649570:AAHO7-cxy5U6kCvaGIOZjNo8UwcozA4UA5E"
+$tg_chat_id = "-1002276726102_2"
 
 #============================================
 # Подготовка окружения
@@ -117,7 +130,7 @@ try {
           $err_message  = $err_message + "$($PSItem.Exception.Message)`n"
         }
       } else {
-        write-host "ПОДРОБНО: Выполнение операции ""Пропуск архивирования базы данных"" над целевым объектом"$database_name
+        write-host "ПОДРОБНО: Выполнение операции ""Пропуск архивирования базы данных"" над целевым объектом "$database_name
       }
     }
   } else {
@@ -204,6 +217,121 @@ try {
   $Response = (Send-Telegram $tg_token $tg_chat_id $Message)
 }
 
+#============================================
+# Копирование архивов на FTP
+#============================================
+if (-not (Test-Path -Path "$ftp_conf_dir")) { 
+  New-Item -Path "$ftp_conf_dir" -ItemType Directory
+}
+
+foreach ($ftp_name in Get-ChildItem $ftp_conf_dir) {
+
+  $ftp_srv_comf_file      = "$ftp_conf_dir\$ftp_name\server.conf"
+  $include_db_to_ftp_file = "$ftp_conf_dir\$ftp_name\include_DB.conf"
+  $exclude_db_to_ftp_file = "$ftp_conf_dir\$ftp_name\exclude_DB.conf"
+
+  if (Test-Path -Path $ftp_srv_comf_file -PathType Leaf) { 
+    $ftp_srv_comf = (Get-Content -path $ftp_srv_comf_file | ? {$_.trim() -ne "" })
+  } else {
+    $ftp_srv_comf = ""
+    Set-Content -Path $ftp_srv_comf_file -Value ""  
+  }
+  $ftp_username = $ftp_srv_comf[0]
+  $ftp_password = $ftp_srv_comf[1]
+  $ftp_url      = $ftp_srv_comf[2]
+
+  if (Test-Path -Path $include_db_to_ftp_file -PathType Leaf) { 
+    $include_db_to_ftp = (Get-Content -path $include_db_to_ftp_file | ? {$_.trim() -ne "" })
+  } else {
+    $include_db_to_ftp = ""
+    Set-Content -Path $include_db_to_ftp_file -Value ""  
+  }
+
+  if (Test-Path -Path $exclude_db_to_ftp_file -PathType Leaf) { 
+    $exclude_db_to_ftp = (Get-Content -path $exclude_db_to_ftp_file | ? {$_.trim() -ne "" })
+  } else {
+    $exclude_db_to_ftp = ""
+    Set-Content -Path $exclude_db_to_ftp_file -Value ""
+  }
+
+  if (-not ($ftp_url -eq "")) {
+    try {
+      $err_message = ""
+
+      if ($include_db_to_ftp.Count -eq 0) {
+        write-host "---                Копирование файлов на ftp $ftp_url (""Черный список"")                ---"
+        foreach ($database_name in $list_db) {
+          if(-not ($database_name -in $exclude_db_to_ftp)) { 
+            write-host "ПОДРОБНО: Выполнение операции ""Копирование базы данных"" над целевым объектом "$database_name" на ftp"
+
+            Get-ChildItem -File -Path $tmp_backup_dir -Name "*$database_name*" | %{ 
+              [System.Net.FtpWebRequest]$WR = [System.Net.WebRequest]::Create("$ftp_url/$_") 
+              $WR.Method = [System.Net.WebRequestMethods+FTP]::UploadFile ;
+              $WR.Credentials = New-Object System.Net.NetworkCredential($ftp_username, $ftp_password) ;
+#              $WR.Proxy = $null ;
+              $WR.UseBinary = $true
+              $WR.UsePassive = $true
+    
+              try {
+                $fileStream = [System.IO.File]::OpenRead("$tmp_backup_dir/$_")
+                $ftpRequestStream = $WR.GetRequestStream()
+
+                $fileStream.CopyTo($ftpRequestStream)
+
+                $ftpRequestStream.Close()
+                $fileStream.Close()
+              } catch {
+                $err_message  = $err_message + "$($PSItem.Exception.Message)`n"
+              }
+            } 
+          } else {
+            write-host "ПОДРОБНО: Выполнение операции ""Пропуск копирования базы данных"" над целевым объектом "$database_name" на ftp"
+          }
+        }
+      } else {
+        write-host "---                Копирование файлов на ftp $ftp_url (""Белый список"")                ---"
+        foreach ($database_name in $list_db) {
+          if($database_name -in $include_db_to_ftp) { 
+            write-host "ПОДРОБНО: Выполнение операции ""Копирование базы данных"" над целевым объектом "$database_name" Копирование файлов на ftp"
+
+            Get-ChildItem -File -Path $tmp_backup_dir -Name "*$database_name*" | %{ 
+              [System.Net.FtpWebRequest]$WR = [System.Net.WebRequest]::Create("$ftp_url/$_") 
+              $WR.Method = [System.Net.WebRequestMethods+FTP]::UploadFile ;
+              $WR.Credentials = New-Object System.Net.NetworkCredential($ftp_username, $ftp_password) ;
+#              $WR.Proxy = $null ;
+              $WR.UseBinary = $true
+              $WR.UsePassive = $true
+    
+              try {
+                $fileStream = [System.IO.File]::OpenRead("$tmp_backup_dir/$_")
+                $ftpRequestStream = $WR.GetRequestStream()
+
+                $fileStream.CopyTo($ftpRequestStream)
+
+                $ftpRequestStream.Close()
+                $fileStream.Close()
+              } catch {
+                $err_message  = $err_message + "$($PSItem.Exception.Message)`n"
+              }
+            } 
+          } else {
+            write-host "ПОДРОБНО: Выполнение операции ""Пропуск копирования базы данных"" над целевым объектом "$database_name" на ftp"
+          }
+        }
+      }
+    } catch {
+      $err_message  = "`n$($PSItem.Exception.Message)"
+    }
+
+    if ($err_message -eq "") {
+      $message  = "Копирование файлов c <b>$srv_name</b> на ftp <b>$ftp_url</b> успешно завершено."
+    } else {
+      $message  = "Копирование файлов c <b>$srv_name</b> на ftp <b>$ftp_url</b> завершено с ошибками."  
+    }  
+
+    $Response = (Send-Telegram $tg_token $tg_chat_id $Message)
+  }
+}
 #============================================
 # Завершение работы
 #============================================
