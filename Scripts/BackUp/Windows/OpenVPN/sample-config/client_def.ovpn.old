@@ -1,0 +1,16 @@
+client
+dev tun
+proto udp
+remote 94.198.55.100 1194
+resolv-retry infinite
+nobind
+persist-key
+persist-tun
+ca c:\\key\\ca.crt
+cert c:\\key\\user.crt
+key c:\\key\\user.key
+remote-cert-tls server
+tls-auth c:\\key\\ta.key 1
+cipher AES-256-GCM
+connect-retry-max 25
+verb 3
