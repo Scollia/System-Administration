@@ -1,0 +1,1 @@
+start powershell.exe -f \\corp.dskvrn.ru\sharedpo\Scripts\Adm_Scripts\LAdmPwd.ps1
